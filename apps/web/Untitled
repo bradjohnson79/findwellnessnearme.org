@@ -1,0 +1,2 @@
+# Neon pooled URL for runtime queries
+DATABASE_URL="postgresql://USER:PASSWORD@ep-xxxx-pooler.REGION.aws.neon.tech/DBNAME?sslmode=require"

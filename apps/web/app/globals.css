@@ -1,0 +1,512 @@
+:root {
+  /* Phase 9.7 — authoritative tokens (single source of truth) */
+
+  /* A) Colors */
+  --color-brand-blue: #3367d6; /* same as logo “Wellness” + section headers */
+  --color-text-primary: #111111; /* black / near-black */
+  --color-text-secondary: #444444; /* muted gray */
+  --color-link: var(--color-brand-blue);
+  --color-border-subtle: #d1d5db; /* light gray */
+  --color-background-page: #ffffff;
+  --color-background-muted: #f9fafb; /* footer only */
+
+  /* B) Typography */
+  --font-family-base: inherit; /* provided by next/font on <body> */
+
+  --font-size-h1: clamp(32px, 3.2vw, 44px);
+  --font-size-h2: 16px;
+  --font-size-h3: 14px;
+  --font-size-body: 16px;
+  --font-size-meta: 12px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* C) Spacing (base unit = 8px) */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-xxl: 64px;
+
+  /* D) Layout */
+  --layout-max-width: 1200px;
+  --layout-content-padding: var(--space-lg);
+  --layout-rail-width: 320px;
+  --layout-header-height: 72px; /* 64–80px allowed */
+
+  /* Back-compat aliases (Phase 9.2–9.6) — DO NOT add new tokens elsewhere */
+  --brand-blue: var(--color-brand-blue);
+  --brand-black: var(--color-text-primary);
+  --border-subtle: var(--color-border-subtle);
+
+  --spacing-xs: var(--space-xs);
+  --spacing-sm: var(--space-sm);
+  --spacing-md: var(--space-md);
+  --spacing-lg: var(--space-lg);
+  --spacing-xl: var(--space-xl);
+  --spacing-xxl: var(--space-xxl);
+
+  --content-max-width: var(--layout-max-width);
+  --header-height: var(--layout-header-height);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-family-base);
+  color: var(--color-text-secondary);
+  background: var(--color-background-page);
+  line-height: 1.5;
+  font-size: var(--font-size-body);
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol {
+  margin: 0;
+}
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+a:hover,
+a:focus-visible {
+  text-decoration: underline;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-border-subtle);
+  outline-offset: 2px;
+}
+
+/* Primary CTA link (used on listing pages) */
+.fnm-ctaCenter {
+  display: flex;
+  justify-content: center;
+}
+.fnm-ctaButton {
+  display: inline-block;
+  padding: 10px 14px;
+  border: 2px solid var(--brand-blue);
+  color: var(--brand-blue);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  border-radius: 4px;
+  background: #ffffff;
+}
+.fnm-ctaButton:hover,
+.fnm-ctaButton:focus-visible {
+  text-decoration: none;
+  background: rgba(51, 103, 214, 0.06);
+}
+
+.fnm-container {
+  max-width: var(--layout-max-width);
+  margin: 0 auto;
+  padding-left: var(--layout-content-padding);
+  padding-right: var(--layout-content-padding);
+}
+
+.fnm-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: var(--layout-header-height) 1fr auto;
+}
+
+.fnm-header {
+  height: var(--layout-header-height);
+  display: flex;
+  align-items: center;
+}
+
+.fnm-headerInner {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+}
+
+.fnm-nav {
+  margin-left: var(--spacing-sm);
+  display: flex;
+  gap: var(--spacing-sm);
+  font-size: 12px;
+}
+
+.fnm-contentGrid {
+  padding-top: var(--spacing-lg);
+  padding-bottom: var(--spacing-xxl);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--layout-rail-width);
+  gap: var(--spacing-xl);
+  align-items: start;
+}
+
+.fnm-contentSingle {
+  padding-top: var(--spacing-lg);
+  padding-bottom: var(--spacing-xxl);
+}
+
+.fnm-main {
+  min-width: 0;
+}
+
+.fnm-rail {
+  min-width: 0;
+}
+
+.fnm-footer {
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  font-size: 12px;
+  opacity: 0.8;
+}
+.fnm-footerLogo {
+  opacity: 1;
+}
+
+/* Readability constraint (Phase 9.2) */
+.fnm-prose {
+  max-width: 75ch;
+}
+
+/* Stack utilities (Phase 9.2 vertical rhythm) */
+.fnm-stack {
+  display: grid;
+  gap: var(--spacing-md);
+}
+.fnm-gap-xs {
+  gap: var(--spacing-xs);
+}
+.fnm-gap-sm {
+  gap: var(--spacing-sm);
+}
+.fnm-gap-md {
+  gap: var(--spacing-md);
+}
+.fnm-gap-lg {
+  gap: var(--spacing-lg);
+}
+.fnm-gap-xl {
+  gap: var(--spacing-xl);
+}
+.fnm-gap-xxl {
+  gap: var(--spacing-xxl);
+}
+
+.fnm-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: baseline;
+}
+.fnm-wrap {
+  flex-wrap: wrap;
+}
+
+.fnm-title {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.fnm-h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.15;
+}
+
+.fnm-h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+}
+
+.fnm-h3 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+}
+
+.fnm-muted {
+  color: var(--color-text-secondary);
+}
+.fnm-dim {
+  color: var(--color-text-secondary);
+}
+.fnm-disabled {
+  opacity: 0.55;
+}
+.fnm-text-sm {
+  font-size: var(--font-size-meta);
+}
+
+.fnm-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.fnm-mb-sm {
+  margin-bottom: var(--spacing-sm);
+}
+
+.fnm-mt-xs {
+  margin-top: var(--spacing-xs);
+}
+.fnm-mt-sm {
+  margin-top: var(--spacing-sm);
+}
+.fnm-mt-md {
+  margin-top: var(--spacing-md);
+}
+.fnm-mt-lg {
+  margin-top: var(--spacing-lg);
+}
+.fnm-mt-xl {
+  margin-top: var(--spacing-xl);
+}
+
+.fnm-section {
+  margin-top: var(--spacing-xl);
+}
+
+.fnm-block {
+  display: block;
+}
+
+.fnm-field {
+  width: 100%;
+  max-width: 100%;
+}
+
+.fnm-fieldset {
+  border: 1px solid var(--border-subtle);
+  padding: var(--spacing-sm);
+}
+
+.fnm-list {
+  margin: 0;
+  padding-left: var(--spacing-lg); /* 24px: strict multiple of 8 */
+}
+.fnm-listPlain {
+  list-style: none;
+  padding-left: 0;
+}
+
+.fnm-chipRow {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.fnm-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  text-decoration: none;
+}
+
+/* Search result structure (Phase 9.4) */
+.fnm-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.fnm-resultList {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.fnm-resultLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.fnm-resultTitle {
+  font-weight: var(--font-weight-semibold);
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+/* Listing detail — structural ad placeholder (Phase 9.5) */
+.fnm-adPlaceholder {
+  border: 1px solid var(--border-subtle);
+  background: var(--color-background-page);
+  padding: var(--spacing-sm);
+  min-height: 56px; /* occupies space even if empty; keeps layout stable */
+  display: flex;
+  align-items: center;
+}
+.fnm-adPlaceholderText {
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+/* Logo styling (Phase 9.1) — no hover effects, no decoration */
+.fnm-logo {
+  display: inline-block;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.1;
+  color: var(--brand-black);
+}
+.fnm-logoBlue {
+  color: var(--brand-blue);
+}
+.fnm-logo--header {
+  font-size: 20px;
+}
+.fnm-logo--footer {
+  font-size: 14px;
+}
+.fnm-logo--inline {
+  font-size: 16px;
+}
+.fnm-logoLink {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Phase 9.3 — Wikipedia-style reference sections (homepage only for now) */
+.fnm-refSection {
+  border: 1px solid var(--border-subtle);
+}
+.fnm-refSectionHeader {
+  background: var(--brand-blue);
+  color: var(--color-background-page);
+  font-weight: 700;
+  padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+.fnm-refSectionHeader h2 {
+  margin: 0;
+  color: inherit;
+  font-size: var(--font-size-h2);
+  font-weight: 600;
+}
+.fnm-refSectionBody {
+  padding: var(--spacing-lg);
+}
+
+.fnm-searchInput {
+  width: 100%;
+  max-width: 720px;
+  font-size: 16px;
+  padding: var(--spacing-sm);
+}
+
+/* Map section (Phase 9.5.15+) */
+.fnm-mapFrame {
+  width: 100%;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-background-page);
+  height: 320px;
+}
+
+.fnm-mapWrap {
+  position: relative;
+  width: 100%;
+}
+
+.fnm-mapMarker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  margin-top: -14px;
+  border: 2px solid var(--color-link);
+  background: var(--color-background-page);
+  box-shadow: 0 0 0 1px var(--color-border-subtle);
+  border-radius: 999px;
+}
+.fnm-mapMarker::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 2px;
+  height: 10px;
+  margin-left: -1px;
+  background: var(--color-link);
+}
+
+.fnm-tableWrap {
+  overflow-x: auto;
+}
+.fnm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.fnm-table th,
+.fnm-table td {
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  vertical-align: top;
+}
+
+@media (max-width: 860px) {
+  .fnm-mapFrame {
+    height: 220px;
+  }
+}
+
+/* Reference footer (Phase 9.5) */
+.fnm-footerRef {
+  background: var(--color-background-muted); /* very light gray, informational */
+  padding: var(--spacing-xl) 0;
+  opacity: 1;
+}
+.fnm-footerRefInner {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+.fnm-footerRefHeading {
+  font-weight: 600;
+  font-size: 12px;
+}
+.fnm-footerRefLinks {
+  display: grid;
+  gap: var(--spacing-xs);
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .fnm-container {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+  .fnm-contentGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+  }
+  .fnm-footerRefInner {
+    grid-template-columns: 1fr;
+  }
+}
+
+

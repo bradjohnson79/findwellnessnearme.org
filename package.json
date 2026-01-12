@@ -1,0 +1,17 @@
+{
+  "name": "findwellnessnearme.org",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run -w @wellnessnearme/admin dev",
+    "seed:geography": "tsx scripts/seed-geography.ts",
+    "seed:modalities": "tsx scripts/seed-modalities.ts",
+    "backfill:locations": "tsx scripts/backfill-listing-locations-from-discovery.ts",
+    "dev:web": "npm run -w @wellnessnearme/web dev"
+  }
+}
+
+

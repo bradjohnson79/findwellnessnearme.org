@@ -1,0 +1,30 @@
+{
+  "name": "@wellnessnearme/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "enqueue:discover": "tsx src/cli/enqueue-discover.ts",
+    "reset:schedules": "tsx src/cli/reset-schedules.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.0",
+    "@wellnessnearme/system": "*",
+    "bullmq": "^5.58.0",
+    "cron-parser": "^4.9.0",
+    "dotenv": "^16.4.5",
+    "playwright": "^1.49.0",
+    "robots-parser": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.0.0"
+  }
+}
+
+

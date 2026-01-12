@@ -1,0 +1,619 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ListingKind {
+  PRACTITIONER
+  BUSINESS
+}
+
+enum ModerationStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  UNPUBLISHED
+  OPTED_OUT
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  VERIFIED
+  STALE
+  FAILED
+}
+
+enum DiscoverySourceType {
+  SEARCH
+  MANUAL
+  PRACTITIONER_SUBMISSION
+}
+
+enum CrawlPurpose {
+  VERIFICATION
+  REFRESH
+}
+
+enum CrawlStatus {
+  SUCCESS
+  BLOCKED_ROBOTS
+  HTTP_ERROR
+  TIMEOUT
+  PARSE_ERROR
+  UNKNOWN_ERROR
+}
+
+enum ActorType {
+  SYSTEM
+  HUMAN
+  ADMIN
+}
+
+enum ModerationAction {
+  SUBMIT_FOR_REVIEW
+  REVERIFY_REQUESTED
+  AI_AUTO_APPROVED
+  APPROVE
+  REJECT
+  UNPUBLISH
+  OPT_OUT
+  RESTORE
+  SCRUB_DELETE
+  REFRESH_SUMMARY
+  FLAG_ATTENTION
+}
+
+enum ModerationReasonCode {
+  DUPLICATE
+  NOT_TIER1
+  NO_WEBSITE
+  OUTSIDE_US
+  NOT_PRACTITIONER_OR_BUSINESS
+  REQUESTED_REMOVAL
+  OTHER
+}
+
+enum RemovalRequestChannel {
+  EMAIL
+  WEBFORM
+  PHONE
+  MAIL
+  OTHER
+}
+
+enum RemovalRequesterRelationship {
+  PRACTITIONER
+  BUSINESS_OWNER
+  AUTHORIZED_REP
+  UNKNOWN
+}
+
+enum RemovalRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ClaimRequestType {
+  CLAIM
+  CORRECTION
+}
+
+enum ClaimRequesterRelationship {
+  OWNER
+  STAFF
+  REPRESENTATIVE
+  OTHER
+}
+
+enum ClaimRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum SystemTaskType {
+  CRAWL
+  VERIFY
+  REFRESH_SUMMARY
+  AI_NORMALIZE
+  CLEANUP
+}
+
+enum TaskScope {
+  GLOBAL
+  STATE
+  CITY
+  LISTING
+}
+
+enum TaskStatus {
+  SUCCESS
+  ERROR
+  SKIPPED
+}
+
+// Phase 8 — deterministic discovery observability
+enum DiscoveryJobType {
+  DISCOVERY_STATE_WAVE
+  DISCOVER_CITY_BATCH
+  MANUAL_SEED
+}
+
+enum DiscoveryProvider {
+  GOOGLE
+  BING
+  YELP
+  OSM
+  MANUAL
+  BRAVE
+}
+
+enum DiscoveryDecision {
+  accepted
+  skipped_duplicate
+  skipped_cap
+  skipped_taxonomy
+  skipped_low_confidence
+  skipped_throttle_ranked
+  provider_error
+}
+
+enum TaxonomyFinalDecision {
+  pass
+  fail
+}
+
+enum ProviderErrorType {
+  timeout
+  quota
+  malformed
+  empty
+  parse
+  other
+}
+
+enum ProviderCallStatus {
+  ok
+  empty
+  error
+}
+
+enum ApprovalSource {
+  HUMAN
+  AI
+}
+
+enum AIReviewVerdict {
+  PASS
+  FAIL
+}
+
+enum AddressVisibility {
+  PUBLIC
+  CITY_ONLY
+}
+
+model Listing {
+  id   String      @id @default(cuid())
+  kind ListingKind
+
+  displayName String
+  slug        String @unique
+
+  /// Public-facing, paraphrased summary (NOT copied testimonials/reviews/third-party descriptions).
+  summary String?
+
+  websiteUrl    String
+  websiteDomain String
+
+  contactPhoneE164 String?
+  contactEmail     String?
+
+  moderationStatus   ModerationStatus   @default(DRAFT)
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+
+  lastVerifiedAt DateTime?
+  lastCrawledAt  DateTime?
+
+  /// System-owned attention flag (set by automated quality gates; cleared only by explicit admin tooling).
+  needsAttention Boolean @default(false)
+
+  /// Phase 10: AI-assisted moderation (auditable, policy-enforcing).
+  aiNeedsHumanReview Boolean @default(false)
+
+  approvalSource     ApprovalSource?
+  approvalConfidence Float?
+
+  optedOutAt DateTime?
+  deletedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modalities       ListingModality[]
+  locations        ListingLocation[]
+  discoveryEvents  ListingDiscoveryEvent[]
+  crawlAttempts    CrawlAttempt[]
+  moderationEvents ListingModerationEvent[]
+  aiReviews        AIReview[]
+  removalRequests  ListingRemovalRequest[]
+  claimRequests    ListingClaimRequest[]
+
+  @@index([moderationStatus, updatedAt])
+  @@index([verificationStatus, updatedAt])
+  @@index([websiteDomain])
+  @@index([needsAttention, updatedAt])
+  @@index([aiNeedsHumanReview, updatedAt])
+  @@index([approvalSource, updatedAt])
+}
+
+model Country {
+  id   String @id @default(cuid())
+  iso2 String @unique
+  name String
+  slug String @unique
+
+  states State[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model State {
+  id        String  @id @default(cuid())
+  countryId String
+  country   Country @relation(fields: [countryId], references: [id], onDelete: Restrict)
+
+  name     String
+  slug     String
+  uspsCode String
+
+  cities City[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([countryId, uspsCode])
+  @@unique([countryId, slug])
+  @@index([countryId, name])
+}
+
+model City {
+  id      String @id @default(cuid())
+  stateId String
+  state   State  @relation(fields: [stateId], references: [id], onDelete: Restrict)
+
+  name String
+  slug String
+
+  locations ListingLocation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([stateId, slug])
+  @@index([stateId, name])
+}
+
+model ListingLocation {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id], onDelete: Restrict)
+
+  /// Optional because some Tier-1 sites only expose city/state.
+  street1    String?
+  street2    String?
+  postalCode String?
+
+  /// Phase 9.x privacy: only show full address if explicitly public.
+  addressVisibility AddressVisibility @default(CITY_ONLY)
+
+  /// Optional precise coordinates for map rendering (single pin). Populated from provider websites / structured data.
+  latitude  Float?
+  longitude Float?
+
+  isPrimary Boolean @default(false)
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([listingId])
+  @@index([cityId])
+  @@index([listingId, isPrimary])
+}
+
+model Modality {
+  id          String @id @default(cuid())
+  slug        String @unique
+  displayName String
+
+  /// Optional hierarchy for taxonomy expansion without a new table.
+  parentId String?
+  parent   Modality?  @relation("ModalityParent", fields: [parentId], references: [id], onDelete: Restrict)
+  children Modality[] @relation("ModalityParent")
+
+  isActive Boolean @default(true)
+
+  listings ListingModality[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([isActive])
+}
+
+model ListingModality {
+  listingId  String
+  modalityId String
+
+  listing  Listing  @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  modality Modality @relation(fields: [modalityId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@id([listingId, modalityId])
+  @@index([modalityId])
+}
+
+model ListingDiscoveryEvent {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+
+  sourceType DiscoverySourceType
+
+  /// E.g. the Tier-1 URL we found in search results, or a submission URL.
+  sourceUrl String?
+
+  /// E.g. query string used for discovery (internal audit).
+  queryText String?
+
+  discoveredAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([listingId, discoveredAt])
+  @@index([sourceType, discoveredAt])
+}
+
+model CrawlAttempt {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+
+  aiReviews AIReview[]
+
+  purpose   CrawlPurpose
+  targetUrl String
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  status        CrawlStatus
+  httpStatus    Int?
+  robotsAllowed Boolean?
+
+  /// Internal-only audit pointers (raw content stored elsewhere, not rendered publicly).
+  contentSha256 String?
+  storageKey    String?
+
+  /// Internal extraction payload (never directly public-rendered).
+  extractedData Json?
+
+  errorCode    String?
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+
+  @@index([listingId, startedAt])
+  @@index([status, startedAt])
+  @@index([contentSha256])
+}
+
+model ListingModerationEvent {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+
+  action     ModerationAction
+  reasonCode ModerationReasonCode?
+
+  note String?
+
+  actorType ActorType
+  actorName String?
+
+  createdAt DateTime @default(now())
+
+  @@index([listingId, createdAt])
+  @@index([action, createdAt])
+}
+
+model AIReview {
+  id        String @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+
+  crawlAttemptId String?
+  crawlAttempt   CrawlAttempt? @relation(fields: [crawlAttemptId], references: [id], onDelete: SetNull)
+
+  verdict    AIReviewVerdict
+  confidence Float
+  reasons    String[]
+  flags      String[]
+
+  modelVersion String
+  reviewedAt   DateTime @default(now())
+
+  /// For audit/debug (truncated/freeform; never public-rendered).
+  rawResponse String?
+
+  @@index([listingId, reviewedAt])
+  @@index([crawlAttemptId, reviewedAt])
+  @@index([verdict, reviewedAt])
+}
+
+model ListingRemovalRequest {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+
+  channel               RemovalRequestChannel
+  requesterRelationship RemovalRequesterRelationship @default(UNKNOWN)
+
+  requesterName  String?
+  requesterEmail String?
+  requesterPhone String?
+
+  note String?
+
+  status     RemovalRequestStatus @default(PENDING)
+  resolvedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([listingId, status])
+  @@index([status, createdAt])
+}
+
+model ListingClaimRequest {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+
+  requestType ClaimRequestType
+
+  requesterName  String
+  requesterEmail String
+  relationship   ClaimRequesterRelationship @default(OTHER)
+
+  /// JSON payload containing only allowlisted factual fields (validated server-side).
+  fieldsRequested Json
+
+  note String?
+
+  status     ClaimRequestStatus @default(PENDING)
+  createdAt  DateTime           @default(now())
+  resolvedAt DateTime?
+
+  @@index([listingId, status, createdAt])
+  @@index([requesterEmail, status, createdAt])
+}
+
+model SystemTaskRun {
+  id          String         @id @default(cuid())
+  taskName    String
+  taskType    SystemTaskType
+  scopeType   TaskScope
+  scopeTarget String?
+  cronExpr    String
+  timezone    String
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  lastStatus  TaskStatus
+  durationMs  Int?
+  note        String?
+  createdAt   DateTime       @default(now())
+
+  @@index([taskName, createdAt])
+  @@index([lastStatus, createdAt])
+}
+
+model DiscoveryAttempt {
+  attemptId String @id @default(uuid())
+
+  // BullMQ job identity (or other scheduler identifier).
+  jobId   String
+  jobType DiscoveryJobType
+
+  provider DiscoveryProvider
+
+  rawName     String?
+  rawAddress  String?
+  rawCity     String?
+  rawState    String?
+  rawCountry  String?
+  rawCategory String?
+
+  // Deterministic dedupe key (e.g., websiteDomain).
+  normalizedKey String
+
+  confidenceScore Float?
+
+  decision       DiscoveryDecision
+  decisionReason String
+
+  taxonomyRuleId String?
+  capRuleId      String?
+
+  providerErrorCode      String?
+  providerErrorRetryable Boolean?
+  providerErrorType      ProviderErrorType?
+  payloadExcerpt         String?
+
+  timestamp DateTime @default(now())
+
+  taxonomyEvaluation TaxonomyEvaluation?
+
+  @@index([jobId, timestamp])
+  @@index([jobType, timestamp])
+  @@index([provider, timestamp])
+  @@index([decision, timestamp])
+  @@index([normalizedKey])
+  @@index([rawCity, rawState, rawCategory, timestamp])
+}
+
+model TaxonomyEvaluation {
+  id        String           @id @default(cuid())
+  attemptId String           @unique
+  attempt   DiscoveryAttempt @relation(fields: [attemptId], references: [attemptId], onDelete: Restrict)
+
+  inputCategory      String?
+  matchedCategories  Json
+  excludedCategories Json
+  finalDecision      TaxonomyFinalDecision
+  taxonomyRuleId     String?
+
+  createdAt DateTime @default(now())
+}
+
+model DiscoveryProviderCall {
+  callId String @id @default(uuid())
+
+  jobId    String
+  jobType  DiscoveryJobType
+  provider DiscoveryProvider
+
+  // Structured query payload (append-only).
+  query Json
+
+  status      ProviderCallStatus
+  resultCount Int
+
+  errorType      ProviderErrorType?
+  errorCode      String?
+  retryable      Boolean?
+  payloadExcerpt String?
+
+  invalidUrlCount    Int @default(0)
+  blockedDomainCount Int @default(0)
+  uniqueDomainCount  Int @default(0)
+
+  timestamp DateTime @default(now())
+
+  @@index([jobId, timestamp])
+  @@index([jobType, timestamp])
+  @@index([provider, timestamp])
+  @@index([status, timestamp])
+}
